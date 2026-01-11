@@ -13,7 +13,17 @@ func handleAddKey(dbPath, userPattern, hostPattern, keyPath string) error {
 	}
 	defer db.Close()
 
-	err = addKey(db, userPattern, hostPattern, keyPath)
+	pemData, err := os.ReadFile(keyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read key: %w", err)
+	}
+
+	finalPemData, err := checkAndEncryptKey(pemData)
+	if err != nil {
+		return fmt.Errorf("failed to check and encrypt key: %w", err)
+	}
+
+	err = addKey(db, finalPemData, userPattern, hostPattern, keyPath)
 	if err != nil {
 		return err
 	}
