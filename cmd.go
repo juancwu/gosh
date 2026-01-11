@@ -56,3 +56,18 @@ func handleUpdateKey(dbPath, userPattern, hostPattern, keyPath string) error {
 
 	return nil
 }
+
+func handleDeleteKey(dbPath string, id int) error {
+	db, err := initDB(dbPath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	err = deleteKey(db, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

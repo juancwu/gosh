@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s [flags] list-keys\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s [flags] add-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s [flags] update-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s [flags] delete-key <id>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "\nFlags:\n")
 		flag.PrintDefaults()
 	}
@@ -65,7 +67,26 @@ func main() {
 			os.Exit(1)
 		}
 		os.Exit(0)
-	}
 
-	startSSH(*dbPath, args)
+	case "delete-key":
+		if argc != 2 {
+			fmt.Println("Usage: gosh delete-key <id>")
+			os.Exit(1)
+		}
+
+		id, err := strconv.ParseInt(args[1], 10, 32)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+
+		err = handleDeleteKey(*dbPath, int(id))
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	default:
+		startSSH(*dbPath, args)
+	}
 }

@@ -121,3 +121,23 @@ func updateKey(db *sql.DB, userPattern, hostPattern, keyPath string) error {
 
 	return nil
 }
+
+func deleteKey(db *sql.DB, id int) error {
+	res, err := db.Exec("DELETE FROM keys WHERE id = ?;", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete key: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err == nil {
+		if rows == 0 {
+			fmt.Printf("No key found with ID %d.\n", id)
+		} else {
+			fmt.Printf("Key with ID %d deleted.\n", id)
+		}
+	} else {
+		fmt.Println("Warning: could not confirm key deletion.", err)
+	}
+
+	return nil
+}
