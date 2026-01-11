@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
@@ -57,29 +57,37 @@ func checkAndEncryptKey(pemData []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Println("Warning: This key is unencrypted.")
-	fmt.Print("Would you like to encrypt it before storing? (y/N): ")
+	tty, err := getTTY()
+	if err != nil {
+		fmt.Println("Warning: cannot open TTY for encryption prompt. Storing unencrypted.")
+		return pemData, nil
+	}
+	defer tty.Close()
+	ttyFd := int(tty.Fd())
+
+	fmt.Fprintln(tty, "Warning: This key is unencrypted.")
+	fmt.Fprint(tty, "Would you like to encrypt it before storing? (y/N): ")
 
 	var response string
-	fmt.Scanln(&response)
+	fmt.Fscanln(tty, &response)
 	if strings.ToLower(response) != "y" {
 		return pemData, nil
 	}
 
-	fmt.Print("Enter new passphrase: ")
-	bytePass, err := term.ReadPassword(int(syscall.Stdin))
-	fmt.Println()
+	fmt.Fprint(tty, "Enter new passphrase: ")
+	bytePass, err := term.ReadPassword(ttyFd)
+	fmt.Fprintln(tty)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read passphrase: %w", err)
 	}
 	passphrase := string(bytePass)
 
-	fmt.Print("Confirm passphrase: ")
-	bytePassConfirm, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Fprint(tty, "Confirm passphrase: ")
+	bytePassConfirm, err := term.ReadPassword(ttyFd)
 	if err != nil {
 		return nil, fmt.Errorf("fialed to read passphrase: %w", err)
 	}
-	fmt.Println()
+	fmt.Fprintln(tty)
 
 	if passphrase != string(bytePassConfirm) {
 		return nil, fmt.Errorf("passphrases do not match")
@@ -109,4 +117,15 @@ func checkAndEncryptKey(pemData []byte) ([]byte, error) {
 	fmt.Println("Key encrypted successfully (AES-256-CTR).")
 
 	return encryptedData, nil
+}
+
+func getTTY() (*os.File, error) {
+	return os.OpenFile("/dev/tty", os.O_RDWR, 0)
+}
+
+func readKeyFile(path string) ([]byte, error) {
+	if path == "-" {
+		return io.ReadAll(os.Stdin)
+	}
+	return os.ReadFile(path)
 }

@@ -57,12 +57,12 @@ func findKey(db *sql.DB, user, host string) ([]byte, error) {
 	return pemData, nil
 }
 
-func addKey(db *sql.DB, pemData []byte, userPattern, hostPattern, keyPath string) error {
+func addKey(db *sql.DB, pemData []byte, userPattern, hostPattern, source string) error {
 	query := `
 	INSERT INTO keys (host_pattern, user_pattern, encrypted_pem, comment)
 	VALUES (?, ?, ? ,?);
 	`
-	_, err := db.Exec(query, hostPattern, userPattern, pemData, "Imported from "+keyPath)
+	_, err := db.Exec(query, hostPattern, userPattern, pemData, "Imported from "+source)
 	if err != nil {
 		return fmt.Errorf("failed to add key: %w", err)
 	}
