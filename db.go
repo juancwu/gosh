@@ -93,3 +93,31 @@ func listkeys(db *sql.DB) ([]KeyRecord, error) {
 
 	return keys, nil
 }
+
+func updateKey(db *sql.DB, userPattern, hostPattern, keyPath string) error {
+	pemData, err := os.ReadFile(keyPath)
+	if err != nil {
+		return fmt.Errorf("failed to read key: %w", err)
+	}
+
+	res, err := db.Exec(
+		"UPDATE keys SET encrypted_pem=?, comment=? WHERE user_pattern = ? AND host_pattern = ?;",
+		pemData, "Updated from "+keyPath, userPattern, hostPattern,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update key: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err == nil {
+		if rows == 0 {
+			fmt.Printf("No key found with user '%s' and host '%s'.\n", userPattern, hostPattern)
+		} else {
+			fmt.Printf("Key for %s@%s updated successfully.\n", userPattern, hostPattern)
+		}
+	} else {
+		fmt.Println("Warning: could not verify update result.", err)
+	}
+
+	return nil
+}

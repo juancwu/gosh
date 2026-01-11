@@ -12,6 +12,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\nManagement Commands:\n")
 		fmt.Fprintf(os.Stderr, "  %s [flags] list-keys\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s [flags] add-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s [flags] update-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "\nFlags:\n")
 		flag.PrintDefaults()
 	}
@@ -46,6 +47,19 @@ func main() {
 
 	case "list-keys":
 		err := handleListKey(*dbPath)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+
+	case "update-key":
+		if argc != 4 {
+			fmt.Println("Usage: gosh update-key <user_pattern> <host_pattern> <path_to_key>")
+			os.Exit(1)
+		}
+
+		err := handleUpdateKey(*dbPath, args[1], args[2], args[3])
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)

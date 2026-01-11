@@ -23,7 +23,7 @@ func startEphemeralAgent(pemData []byte, target string) (string, func(), error) 
 
 	if err != nil {
 		if _, ok := err.(*ssh.PassphraseMissingError); ok {
-			fmt.Printf("\033[1;32m? Gosh:\033[0m Key for \033[1m%s\033[0m is encrypted. Enter passphrase: ", target)
+			fmt.Printf("\033[1;32mGosh:\033[0m Key for \033[1m%s\033[0m is encrypted. Enter passphrase: ", target)
 			pass, readErr := term.ReadPassword(int(syscall.Stdin))
 			fmt.Println()
 			if readErr != nil {

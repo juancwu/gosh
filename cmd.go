@@ -41,3 +41,18 @@ func handleListKey(dbPath string) error {
 	w.Flush()
 	return nil
 }
+
+func handleUpdateKey(dbPath, userPattern, hostPattern, keyPath string) error {
+	db, err := initDB(dbPath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	err = updateKey(db, userPattern, hostPattern, keyPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
