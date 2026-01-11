@@ -34,6 +34,22 @@ func initDB(dbPath string) (*sql.DB, error) {
 	return db, nil
 }
 
+func findKey(db *sql.DB, user, host string) ([]byte, error) {
+	query := `
+	SELECT encrypted_pem FROM keys
+	WHERE (host_pattern = ? OR host_pattern = '*') AND (user_pattern = ? OR user_pattern = '*')
+	ORDER BY id DESC LIMIT 1;
+	`
+
+	var pemData []byte
+	err := db.QueryRow(query, host, user).Scan(&pemData)
+	if err != nil {
+		return nil, err
+	}
+
+	return pemData, nil
+}
+
 func addKey(db *sql.DB, userPattern, hostPattern, keyPath string) error {
 	pemData, err := os.ReadFile(keyPath)
 	if err != nil {
