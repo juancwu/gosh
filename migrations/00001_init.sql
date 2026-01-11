@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS keys (
     host_pattern TEXT NOT NULL,
     user_pattern TEXT NOT NULL,
     encrypted_pem BLOB NOT NULL,
-    comment TEXT
+    comment TEXT,
+    UNIQUE (user_pattern, host_pattern)
 );
 -- +goose StatementEnd
 
