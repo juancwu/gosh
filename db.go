@@ -9,6 +9,13 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+type KeyRecord struct {
+	ID          int
+	HostPattern string
+	UserPattern string
+	Comment     string
+}
+
 func getDBPath() string {
 	home, _ := os.UserHomeDir()
 	localDataDir := filepath.Join(home, ".local", "share", "gosh")
@@ -66,4 +73,23 @@ func addKey(db *sql.DB, userPattern, hostPattern, keyPath string) error {
 	}
 
 	return nil
+}
+
+func listkeys(db *sql.DB) ([]KeyRecord, error) {
+	rows, err := db.Query("SELECT id, host_pattern, user_pattern, comment FROM keys;")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query keys: %w", err)
+	}
+	defer rows.Close()
+
+	var keys []KeyRecord
+	for rows.Next() {
+		var k KeyRecord
+		if err := rows.Scan(&k.ID, &k.HostPattern, &k.UserPattern, &k.Comment); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		keys = append(keys, k)
+	}
+
+	return keys, nil
 }
