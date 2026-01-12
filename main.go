@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -20,10 +21,30 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	storePath := flag.String("store", "", "Path to the keys store (optional)")
-	flag.Parse()
+	storePath := flag.String("gosh-store", "", "Path to the keys store (optional)")
 
-	args := flag.Args()
+	var args []string
+	for i := 1; i < len(os.Args); i++ {
+		arg := os.Args[i]
+		if arg == "-h" || arg == "--help" || arg == "-help" {
+			flag.Usage()
+			os.Exit(0)
+		} else if arg == "-gosh-store" {
+			if i+1 < len(os.Args) {
+				*storePath = os.Args[i+1]
+				i++
+			} else {
+				fmt.Fprintln(os.Stderr, "flag needs an argument: -gosh-store")
+				flag.Usage()
+				os.Exit(2)
+			}
+		} else if strings.HasPrefix(arg, "-gosh-store=") {
+			*storePath = strings.TrimPrefix(arg, "-gosh-store=")
+		} else {
+			args = append(args, arg)
+		}
+	}
+
 	argc := len(args)
 
 	if argc == 0 {
@@ -37,7 +58,7 @@ func main() {
 	case "add-key":
 		if argc != 4 {
 			fmt.Println("Error: Incorrect arguments for add-key.")
-			fmt.Println("Try: gosh [-store path] add-key <user_pattern> <host_pattern> <path_to_key>")
+			fmt.Println("Try: gosh [-gosh-store path] add-key <user_pattern> <host_pattern> <path_to_key>")
 			os.Exit(1)
 		}
 
