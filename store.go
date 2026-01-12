@@ -30,8 +30,8 @@ func getStorePath(customPath string) string {
 	localDataDir := filepath.Join(home, ".local", "share", "gosh")
 	err := os.MkdirAll(localDataDir, 0700)
 	if err != nil {
-		fmt.Println("Warning: Failed to create local data direction '", localDataDir, "': ", err)
-		fmt.Println("Warning: Putting database in current working directory.")
+		fmt.Fprintln(os.Stderr, "Warning: Failed to create local data direction '", localDataDir, "': ", err)
+		fmt.Fprintln(os.Stderr, "Warning: Putting database in current working directory.")
 		return "./keys.json"
 	}
 	return filepath.Join(localDataDir, "keys.json")
