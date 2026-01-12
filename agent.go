@@ -79,24 +79,16 @@ func startEphemeralAgent(pemData []byte, target string) (string, func(), error) 
 	return sockPath, cleanup, nil
 }
 
-func startSSH(dbPath string, args []string) {
+func startSSH(storePath string, args []string) {
 	user, host := parseDestination(args)
 	env := os.Environ()
 
 	if host != "" {
-		db, err := initDB(dbPath)
+		pemData, err := findKey(storePath, user, host)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
-
-		pemData, err := findKey(db, user, host)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-
-		db.Close()
 
 		targetName := host
 		if user != "" {

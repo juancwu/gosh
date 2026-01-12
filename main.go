@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"text/tabwriter"
 )
 
 func main() {
@@ -13,13 +14,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "\nManagement Commands:\n")
 		fmt.Fprintf(os.Stderr, "  %s [flags] list-keys\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s [flags] add-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  %s [flags] update-key <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s [flags] update-key <id> <user_pattern> <host_pattern> <path_to_key>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s [flags] delete-key <id>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "\nFlags:\n")
 		flag.PrintDefaults()
 	}
 
-	dbPath := flag.String("db", "", "Path to the keys database (optional)")
+	storePath := flag.String("store", "", "Path to the keys store (optional)")
 	flag.Parse()
 
 	args := flag.Args()
@@ -36,11 +37,15 @@ func main() {
 	case "add-key":
 		if argc != 4 {
 			fmt.Println("Error: Incorrect arguments for add-key.")
-			fmt.Println("Try: gosh [--db path] add-key <user_pattern> <host_pattern> <path_to_key>")
+			fmt.Println("Try: gosh [-store path] add-key <user_pattern> <host_pattern> <path_to_key>")
 			os.Exit(1)
 		}
 
-		err := handleAddKey(*dbPath, args[1], args[2], args[3])
+		user := args[1]
+		host := args[2]
+		keyPath := args[3]
+
+		err := addKey(*storePath, user, host, keyPath)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
@@ -48,20 +53,40 @@ func main() {
 		os.Exit(0)
 
 	case "list-keys":
-		err := handleListKey(*dbPath)
+		keys, err := listkeys(*storePath)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "UD\tUser Pattern\tHost Pattern\tComment")
+		fmt.Fprintln(w, "--\t------------\t------------\t-------")
+		for _, k := range keys {
+			fmt.Fprintf(w, "%d\t%s\t%s\t%s\n", k.ID, k.UserPattern, k.HostPattern, k.Comment)
+		}
+		w.Flush()
+
 		os.Exit(0)
 
 	case "update-key":
-		if argc != 4 {
-			fmt.Println("Usage: gosh update-key <user_pattern> <host_pattern> <path_to_key>")
+		if argc != 5 {
+			fmt.Println("Usage: gosh update-key <id> <user_pattern> <host_pattern> <path_to_key>")
 			os.Exit(1)
 		}
 
-		err := handleUpdateKey(*dbPath, args[1], args[2], args[3])
+		idStr := args[1]
+		user := args[2]
+		host := args[3]
+		keyPath := args[4]
+
+		id, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
+
+		err = updateKey(*storePath, int(id), user, host, keyPath)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
@@ -80,13 +105,13 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = handleDeleteKey(*dbPath, int(id))
+		err = deleteKey(*storePath, int(id))
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	default:
-		startSSH(*dbPath, args)
+		startSSH(*storePath, args)
 	}
 }
