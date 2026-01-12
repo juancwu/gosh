@@ -85,30 +85,27 @@ func startSSH(storePath string, args []string) {
 
 	if host != "" {
 		pemData, err := findKey(storePath, user, host)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-
-		targetName := host
-		if user != "" {
-			targetName = user + "@" + host
-		}
-
-		socketPath, cleanup, err := startEphemeralAgent(pemData, targetName)
-		if err != nil {
-			fmt.Println("Error:", err)
-			os.Exit(1)
-		}
-		defer cleanup()
-
-		newEnv := []string{"SSH_AUTH_SOCK=" + socketPath}
-		for _, e := range env {
-			if !strings.HasPrefix(e, "SSH_AUTH_SOCK=") {
-				newEnv = append(newEnv, e)
+		if err == nil {
+			targetName := host
+			if user != "" {
+				targetName = user + "@" + host
 			}
+
+			socketPath, cleanup, err := startEphemeralAgent(pemData, targetName)
+			if err != nil {
+				fmt.Println("Error:", err)
+				os.Exit(1)
+			}
+			defer cleanup()
+
+			newEnv := []string{"SSH_AUTH_SOCK=" + socketPath}
+			for _, e := range env {
+				if !strings.HasPrefix(e, "SSH_AUTH_SOCK=") {
+					newEnv = append(newEnv, e)
+				}
+			}
+			env = newEnv
 		}
-		env = newEnv
 	}
 
 	sshPath, err := exec.LookPath("ssh")
